@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiche Allenamento - Offline</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .chart-container { height: 480px; }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100">
+    <div class="max-w-7xl mx-auto p-6">
+        <div class="flex justify-between items-center mb-10">
+            <h1 class="text-4xl font-semibold">Statistiche Allenamento</h1>
+            <button onclick="document.getElementById('csvInput').click()" 
+                    class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-2xl font-medium flex items-center gap-2 transition">
+                📤 Carica workout_data.csv
+            </button>
+            <input type="file" id="csvInput" accept=".csv" class="hidden">
+        </div>
+
+        <!-- Panoramica Sessioni - Tutti grafici full-width e verticali -->
+        <div class="mb-16">
+            <h2 class="text-3xl font-semibold mb-8 text-emerald-400">Panoramica Sessioni</h2>
+            <div class="space-y-16">
+                <div>
+                    <h3 class="text-2xl font-medium mb-4 text-emerald-400">Durata Totale (minuti)</h3>
+                    <div class="chart-container bg-zinc-900 rounded-3xl p-6"><canvas id="durationChart"></canvas></div>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-medium mb-4 text-lime-400">Volume Totale (kg)</h3>
+                    <div class="chart-container bg-zinc-900 rounded-3xl p-6"><canvas id="volumeChart"></canvas></div>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-medium mb-4 text-cyan-400">Set Totali</h3>
+                    <div class="chart-container bg-zinc-900 rounded-3xl p-6"><canvas id="setsChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Esercizi - Grafici full-width verticali -->
+        <div>
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-3xl font-semibold text-emerald-400">Analisi Esercizi</h2>
+                <select id="exerciseSelect" onchange="showExerciseStats(this.value)"
+                        class="bg-zinc-900 border border-zinc-700 rounded-2xl px-6 py-4 text-lg focus:outline-none focus:border-emerald-500">
+                    <option value="">Seleziona un esercizio...</option>
+                </select>
+            </div>
+
+            <div id="prSection" class="hidden grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12"></div>
+
+            <div id="lineCharts" class="space-y-16"></div>
+        </div>
+    </div>
+
+    <script>
+        let workoutData = [];
+        let sessions = [];
+        let currentCharts = {};
+
+        const monthMap = {'Jan':0,'Feb':1,'Mar':2,'Apr':3,'May':4,'Jun':5,'Jul':6,'Aug':7,'Sep':8,'Oct':9,'Nov':10,'Dec':11};
+
+        function parseFullDate(str) {
+            if (!str) return null;
+            const [datePart, timePart] = str.split(', ');
+            if (!datePart) return null;
+            const [day, monthStr, year] = datePart.split(' ');
+            const month = monthMap[monthStr];
+            if (month === undefined) return null;
+            if (!timePart) return new Date(Number(year), month, Number(day));
+            const [hour, minute] = timePart.split(':').map(Number);
+            return new Date(Number(year), month, Number(day), hour || 0, minute || 0);
+        }
+
+        function estimate1RM(weight, reps) {
+            if (!weight || !reps) return 0;
+            return Math.round(weight * (1 + reps / 30));
+        }
+
+        function processOverview() {
+            const sessionMap = new Map();
+
+            workoutData.forEach(row => {
+                if (!row.start_time) return;
+                const key = row.start_time;
+                if (!sessionMap.has(key)) {
+                    const startDate = parseFullDate(row.start_time);
+                    const endDate = parseFullDate(row.end_time);
+                    let duration = 0;
+                    if (startDate && endDate) {
+                        duration = Math.round((endDate - startDate) / 60000);
+                    }
+                    sessionMap.set(key, {
+                        date: startDate,
+                        durationMin: duration,
+                        sets: 0,
+                        volume: 0
+                    });
+                }
+                const sess = sessionMap.get(key);
+                const w = parseFloat(row.weight_kg) || 0;
+                const r = parseInt(row.reps) || 0;
+                if (row.set_type === 'normal' && r > 0) {
+                    sess.sets++;
+                    if (w > 0) sess.volume += w * r;
+                }
+            });
+
+            sessions = Array.from(sessionMap.values())
+                .filter(s => s.date)
+                .sort((a, b) => a.date - b.date);
+
+            const shortLabels = sessions.map(s => s.date.toLocaleDateString('it-IT', {day:'numeric', month:'short'}));
+
+            renderBarChart('durationChart', sessions.map(s => s.durationMin), '#10b981', 'Durata (min)');
+            renderBarChart('volumeChart', sessions.map(s => Math.round(s.volume)), '#84cc16', 'Volume (kg)');
+            renderBarChart('setsChart', sessions.map(s => s.sets), '#22d3ee', 'Set');
+        }
+
+        function renderBarChart(id, data, color, label) {
+            const ctx = document.getElementById(id);
+            if (currentCharts[id]) currentCharts[id].destroy();
+            currentCharts[id] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sessions.map(s => s.date.toLocaleDateString('it-IT', {day:'numeric', month:'short'})),
+                    datasets: [{ label: label, data: data, backgroundColor: color, borderWidth: 1 }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#3f3f46' } },
+                        x: { ticks: { color: '#a1a1aa' }, grid: { color: '#3f3f46' } }
+                    }
+                }
+            });
+        }
+
+        function populateExercises() {
+            const exSet = new Set(workoutData.map(r => r.exercise_title).filter(Boolean)
+                .filter(ex => !['Warm Up', 'Stretching'].includes(ex)));
+            const select = document.getElementById('exerciseSelect');
+            select.innerHTML = '<option value="">Seleziona un esercizio...</option>';
+            [...exSet].sort().forEach(ex => {
+                const opt = document.createElement('option');
+                opt.value = ex; opt.textContent = ex;
+                select.appendChild(opt);
+            });
+        }
+
+        function showExerciseStats(exercise) {
+            if (!exercise) {
+                document.getElementById('prSection').classList.add('hidden');
+                document.getElementById('lineCharts').innerHTML = '';
+                return;
+            }
+
+            const data = workoutData.filter(r => r.exercise_title === exercise && r.set_type === 'normal');
+            const isBodyweight = data.some(r => !r.weight_kg || parseFloat(r.weight_kg) <= 0);
+
+            const sessionMap = new Map();
+            data.forEach(row => {
+                const key = row.start_time;
+                if (!sessionMap.has(key)) {
+                    sessionMap.set(key, {
+                        date: parseFullDate(row.start_time),
+                        maxWeight: 0, maxReps: 0, max1RM: 0,
+                        maxSetVol: 0, sessionVol: 0, sessionReps: 0
+                    });
+                }
+                const s = sessionMap.get(key);
+                const w = parseFloat(row.weight_kg) || 0;
+                const r = parseInt(row.reps) || 0;
+                if (r > 0) {
+                    s.maxReps = Math.max(s.maxReps, r);
+                    s.sessionReps += r;
+                    if (w > 0) {
+                        const vol = w * r;
+                        s.maxWeight = Math.max(s.maxWeight, w);
+                        s.max1RM = Math.max(s.max1RM, estimate1RM(w, r));
+                        s.maxSetVol = Math.max(s.maxSetVol, vol);
+                        s.sessionVol += vol;
+                    }
+                }
+            });
+
+            const exSessions = Array.from(sessionMap.values()).filter(s => s.date).sort((a,b) => a.date - b.date);
+            const labels = exSessions.map(s => s.date.toLocaleDateString('it-IT', {day:'numeric', month:'short'}));
+
+            // Personal Records
+            let prMax = 0, pr1RM = 0, prSet = 0, prSession = 0;
+            exSessions.forEach(s => {
+                if (isBodyweight) {
+                    prMax = Math.max(prMax, s.maxReps);
+                    prSet = Math.max(prSet, s.maxReps);
+                    prSession = Math.max(prSession, s.sessionReps);
+                } else {
+                    prMax = Math.max(prMax, s.maxWeight);
+                    pr1RM = Math.max(pr1RM, s.max1RM);
+                    prSet = Math.max(prSet, s.maxSetVol);
+                    prSession = Math.max(prSession, s.sessionVol);
+                }
+            });
+
+            const prHTML = `
+                <div class="bg-zinc-900 rounded-3xl p-8 text-center">
+                    <p class="text-zinc-400">${isBodyweight ? 'Best Reps' : 'Peso Max'}</p>
+                    <p class="text-5xl font-bold mt-3">${isBodyweight ? prMax + ' reps' : prMax.toFixed(1) + ' kg'}</p>
+                </div>
+                <div class="bg-zinc-900 rounded-3xl p-8 text-center">
+                    <p class="text-zinc-400">Best 1RM</p>
+                    <p class="text-5xl font-bold mt-3">${isBodyweight ? '—' : pr1RM + ' kg'}</p>
+                </div>
+                <div class="bg-zinc-900 rounded-3xl p-8 text-center">
+                    <p class="text-zinc-400">${isBodyweight ? 'Best Set Reps' : 'Best Set Volume'}</p>
+                    <p class="text-5xl font-bold mt-3">${isBodyweight ? prSet + ' reps' : prSet.toFixed(0) + ' kg'}</p>
+                </div>
+                <div class="bg-zinc-900 rounded-3xl p-8 text-center">
+                    <p class="text-zinc-400">${isBodyweight ? 'Session Reps' : 'Session Volume'}</p>
+                    <p class="text-5xl font-bold mt-3">${isBodyweight ? prSession + ' reps' : prSession.toFixed(0) + ' kg'}</p>
+                </div>`;
+            document.getElementById('prSection').innerHTML = prHTML;
+            document.getElementById('prSection').classList.remove('hidden');
+
+            // Grafici esercizio - verticali full-width
+            let html = `<div class="space-y-16">`;
+            if (isBodyweight) {
+                html += `
+                    <div><h3 class="text-2xl font-medium mb-4">Migliori Reps per Set</h3><div class="chart-container bg-zinc-900 rounded-3xl p-6"><canvas id="l1"></canvas></div></div>
+                    <div><h3 class="text-2xl font-medium mb-4">Reps Totali per Sessione</h3><div class="chart-container bg-zinc-900 rounded-3xl p-6"><canvas id="l2"></canvas></div></div>`;
+            } else {
+                html += `
+                    <div><h3 class="text-2xl font-medium mb-4">Peso Massimo</h3><div class="chart-container bg-zinc-900 rounded-3xl p-6"><canvas id="l1"></canvas></div></div>
+                    <div><h3 class="text-2xl font-medium mb-4">Session Volume</h3><div class="chart-container bg-zinc-900 rounded-3xl p-6"><canvas id="l2"></canvas></div></div>
+                    <div><h3 class="text-2xl font-medium mb-4">1RM Stimato</h3><div class="chart-container bg-zinc-900 rounded-3xl p-6"><canvas id="l3"></canvas></div></div>
+                    <div><h3 class="text-2xl font-medium mb-4">Best Set Volume</h3><div class="chart-container bg-zinc-900 rounded-3xl p-6"><canvas id="l4"></canvas></div></div>`;
+            }
+            html += `</div>`;
+            document.getElementById('lineCharts').innerHTML = html;
+
+            if (isBodyweight) {
+                renderLine('l1', exSessions.map(s => s.maxReps), '#10b981', labels);
+                renderLine('l2', exSessions.map(s => s.sessionReps), '#a3e635', labels);
+            } else {
+                renderLine('l1', exSessions.map(s => s.maxWeight), '#10b981', labels);
+                renderLine('l2', exSessions.map(s => s.sessionVol), '#a3e635', labels);
+                renderLine('l3', exSessions.map(s => s.max1RM), '#67e8f9', labels);
+                renderLine('l4', exSessions.map(s => s.maxSetVol), '#f472b6', labels);
+            }
+        }
+
+        function renderLine(id, data, color, labels) {
+            const ctx = document.getElementById(id);
+            if (currentCharts[id]) currentCharts[id].destroy();
+            currentCharts[id] = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets: [{ data, borderColor: color, tension: 0.3, borderWidth: 4, pointRadius: 5 }] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { color: '#3f3f46' }}, x: { grid: { color: '#3f3f46' }, ticks: { color: '#a1a1aa' }}}
+                }
+            });
+        }
+
+        document.getElementById('csvInput').addEventListener('change', e => {
+            Papa.parse(e.target.files[0], {
+                header: true,
+                skipEmptyLines: true,
+                complete: res => {
+                    workoutData = res.data;
+                    processOverview();
+                    populateExercises();
+                    alert('✅ CSV caricato correttamente!\nI grafici ora mostrano la durata.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
