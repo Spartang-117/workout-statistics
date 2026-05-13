@@ -2,7 +2,7 @@
 simple apps to check workouts statitics offline with bars graph and muscle distribution
 
 ## Requisiti
-per file .py necessario installare python su pc e streamlit per far partire il programma
+per file .py necessario installare python su pc e anche streamlit e pandas per far partire il programma
 
 per il file .html nessun prerequisito
 
