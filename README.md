@@ -1,14 +1,14 @@
 # workout-statistics
 simple apps to check workouts statitics offline with bars graph and muscle distribution
 
-Requisiti
+##Requisiti
 per file .py necessario installare python su pc e streamlit per far partire il programma
 
 per il file .html nessun prerequisito
 
 file .csv dove sono salvati le sessioni di allenamento
 
-come funziona
+##Come funziona
 file .py:
 aprire un terminale e lanciare comando streamlit run workout_stats_app.py, si aprirà una finestra browser dove chiederà di caricare file .csv;
 una volta caricato avrete le vostre statistiche
