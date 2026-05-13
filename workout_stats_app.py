@@ -239,3 +239,6 @@ st.dataframe(muscle_rank.style.hide(axis="index").format({"Sets Ponderati": "{:.
 # ====================== FINE ======================
 st.success("✅ Dashboard aggiornata e stabile!")
 st.caption("Muscoli principali = 1 • Muscoli secondari = 0.5 • Tutti i grafici sono fissi")
+
+#SPDX-License-Identifier: GPL-3.0-or-later
+#Copyright (c) 2026.
