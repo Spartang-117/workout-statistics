@@ -164,8 +164,11 @@
             }
 
             const data = workoutData.filter(r => r.exercise_title === exercise && r.set_type === 'normal');
-            const isBodyweight = data.some(r => !r.weight_kg || parseFloat(r.weight_kg) <= 0);
+            const hasWeight = data.some(r => {
+                const w = parseFloat(r.weight_kg);
+                return !isNaN(w) && w > 5;});
 
+            const isBodyweight = !hasWeight;
             const sessionMap = new Map();
             data.forEach(row => {
                 const key = row.start_time;
