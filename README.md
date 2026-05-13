@@ -18,3 +18,13 @@ file .html:
 aprire il file su un browser e vi chiederà un file .csv; una volta caricato avrete le vostre statistiche
 (necessario internet per caricare .csv)
 
+## Cosa vedrai
+### file .py 
+ statistiche con filtro mensile
+ 1. sessione con grafici a barre di durata, volume e sets totali e un riassunto
+ 2. sessione grafico distribuazione dei muscoli comparando il mese precedente
+
+### file .html
+panoramica storico alltime
+grafiici a barre per durata, volume e sets totali
+analisi degli esercizi, usando il filtro selezioni l'esercizio e mostrerà un riassunto e dei grafici a linea
