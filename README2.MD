@@ -73,23 +73,15 @@ Clicca su "Carica workout_data.csv"
 Visualizza immediatamente le statistiche
 
 
-## Struttura del Repository
-textworkout-statistics/
-- ├── workout_stats_app.py           Versione Streamlit
-- ├── workout-stats.html             Versione Web standalone
-- ├── workout_data.csv               (esempio o il tuo file)
-- ├── LICENSE
-- └── README.md
-
 Come preparare il file CSV
 Il file deve contenere almeno le seguenti colonne (adattabili):
 
-start_time
-end_time
-exercise_title
-set_type
-weight_kg
-reps
+- start_time
+- end_time
+- exercise_title
+- set_type
+- weight_kg
+- reps
 
 
 # Tecnologie Utilizzate
