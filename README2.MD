@@ -75,11 +75,11 @@ Visualizza immediatamente le statistiche
 
 ## Struttura del Repository
 textworkout-statistics/
-├── workout_stats_app.py           Versione Streamlit
-├── workout-stats.html             Versione Web standalone
-├── workout_data.csv               (esempio o il tuo file)
-├── LICENSE
-└── README.md
+- ├── workout_stats_app.py           Versione Streamlit
+- ├── workout-stats.html             Versione Web standalone
+- ├── workout_data.csv               (esempio o il tuo file)
+- ├── LICENSE
+- └── README.md
 
 Come preparare il file CSV
 Il file deve contenere almeno le seguenti colonne (adattabili):
