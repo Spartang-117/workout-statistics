@@ -66,7 +66,7 @@ streamlit run workout_stats_app.py
 
 Carica il tuo file workout_data.csv quando richiesto.
 
-###2. Versione HTML
+### 2. Versione HTML
 
 Scarica o apri direttamente il file workout-stats.html
 Clicca su "Carica workout_data.csv"
