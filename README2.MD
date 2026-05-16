@@ -73,11 +73,11 @@ Clicca su "Carica workout_data.csv"
 Visualizza immediatamente le statistiche
 
 
-##Struttura del Repository
+## Struttura del Repository
 textworkout-statistics/
-├── workout_stats_app.py          # Versione Streamlit
-├── workout-stats.html            # Versione Web standalone
-├── workout_data.csv              # (esempio o il tuo file)
+├── workout_stats_app.py           Versione Streamlit
+├── workout-stats.html             Versione Web standalone
+├── workout_data.csv               (esempio o il tuo file)
 ├── LICENSE
 └── README.md
 
@@ -91,13 +91,13 @@ set_type
 weight_kg
 reps
 
-(Puoi aggiungere un esempio di CSV nel repository se vuoi)
-Tecnologie Utilizzate
+
+# Tecnologie Utilizzate
 
 Python + Streamlit + Pandas + Plotly
 HTML5 + Tailwind CSS + Chart.js + PapaParse
 
-Licenza
+# Licenza
 Questo progetto è distribuito sotto licenza GNU GPL-3.0 — vedi il file LICENSE per maggiori dettagli.
 Contatti
 
