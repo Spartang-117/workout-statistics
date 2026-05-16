@@ -93,9 +93,12 @@ HTML5 + Tailwind CSS + Chart.js + PapaParse
 Questo progetto è distribuito sotto licenza GNU GPL-3.0 — vedi il file LICENSE per maggiori dettagli.
 Contatti
 
+
 Autore: Spartang-117
+
 Sentiti libero di aprire una Issue o una Pull Request se vuoi contribuire o segnalare miglioramenti.
 
 
 Grazie per aver visitato il repository!
+
 Se ti è utile, lascia una ⭐ per supportare il progetto.
