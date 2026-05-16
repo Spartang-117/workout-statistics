@@ -54,14 +54,14 @@ Entrambe le applicazioni elaborano i dati localmente e **non richiedono connessi
 ### 1. Versione Streamlit (consigliata)
 
 bash
-# Clona il repository
+#### Clona il repository
 git clone https://github.com/Spartang-117/workout-statistics.git
 cd workout-statistics
 
-# Installa le dipendenze
+#### Installa le dipendenze
 pip install streamlit pandas plotly
 
-# Avvia l'applicazione
+#### Avvia l'applicazione
 streamlit run workout_stats_app.py
 
 Carica il tuo file workout_data.csv quando richiesto.
